@@ -1,6 +1,7 @@
 const express = require("express");
 const poolCompraPy = require("./ConexionBdPy");
 
+const poolCompraresto = require("./ConexionBdPy");
 
 console.log("Hola, estoy iniciando");
 
@@ -31,6 +32,17 @@ app.get('/compras/py', async (req, res) => {
         res.status(500).send("Error grave en el servidor");
     }
 });
+
+app.get('/compras/resto', async (req, res) => {
+    try {
+        const result = await poolCompraresto.query("SELECT * FROM compras");
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error grave en el servidor", error);
+        res.status(500).send("Error grave en el servidor");
+    }
+});
+
 
 /*POST PARA GUARDAR NUEVO REGISTRO */
 /*PEro, usaremos GET con fines didacticos para ejecutar directo desde el navegador */
@@ -74,6 +86,46 @@ app.get('/compras/py/agregar', async (req, res) => {
 
 
 
+app.get('/compras/resto/agregar', async (req, res) => {
+    try {
+        const compra = {
+            producto: "teclado",
+            cantidad: 108,
+            precio_unitario: 20000,
+            total: 100000,
+            fecha_compra: '2024-11-21'
+        };
+
+        const query = `
+                INSERT INTO compras (producto, cantidad, precio_unitario, total, fecha_compra)
+                VALUES ($1, $2, $3, $4, $5)
+                `;
+
+        await poolCompraresto.query(query,
+            [compra.producto, compra.cantidad, compra.precio_unitario, compra.total, compra.fecha_compra],
+            (error, resultado) => {
+                if (error) {
+                    console.error("Error al insertar: ", error);
+                } else {
+                    console.log("Insercion correcta: ");
+                }
+                //poolCompraPy.end();
+            }
+        );
+
+        const result = {
+            mensaje: "Registro insertado correctamente"
+        }
+
+        res.json(result);
+    } catch (error) {
+        console.error("Error grave en el servidor al insertar", error);
+        res.status(500).send("Error grave en el servidor al insertar");
+    }
+});
+
+
+
 
 
 const puerto = 3000;
@@ -81,4 +133,3 @@ app.listen(puerto, () => {
     console.log("Servidor iniciado correctamente en puerto: " + puerto);
 }
 );
-
